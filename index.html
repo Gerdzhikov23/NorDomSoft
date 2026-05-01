@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>НорДомСофт · Вход</title>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&family=Unbounded:wght@600;800&display=swap" rel="stylesheet" />
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --navy:#0f1f3d; --navy2:#1a3260; --blue:#1d4ed8; --sky:#3b82f6;
+  --amber:#f59e0b; --amber2:#fbbf24; --green:#10b981; --red:#ef4444;
+  --bg:#f0f4ff; --surface:#ffffff; --border:#e2e8f7;
+  --text:#0f1f3d; --muted:#64748b;
+  --shadow:0 2px 16px rgba(15,31,61,0.06);
+}
+html,body { height:100%; font-family:'Onest',sans-serif; background:var(--navy); color:var(--text); overflow:hidden; }
+
+/* ── BACKGROUND ── */
+.bg-wrap { position:fixed; inset:0; background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 50%,#1e3a6e 100%); overflow:hidden; }
+.bg-wrap::before { content:''; position:absolute; top:-100px; right:-150px; width:500px; height:500px; background:radial-gradient(circle,rgba(59,130,246,0.18) 0%,transparent 65%); border-radius:50%; animation:orb 12s ease-in-out infinite alternate; }
+.bg-wrap::after { content:''; position:absolute; bottom:-180px; left:-100px; width:420px; height:420px; background:radial-gradient(circle,rgba(251,191,36,0.1) 0%,transparent 65%); border-radius:50%; animation:orb2 14s ease-in-out infinite alternate; }
+@keyframes orb { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(-60px,40px) scale(1.2)} }
+@keyframes orb2 { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(50px,-30px) scale(1.15)} }
+.grid-overlay { position:fixed; inset:0; background-image:linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; }
+
+/* ── PAGE LAYOUT ── */
+.page { position:relative; z-index:2; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; overflow-y:auto; }
+
+/* ── CARD ── */
+.login-card { width:100%; max-width:420px; background:var(--surface); border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,0.25),0 4px 16px rgba(0,0,0,0.08); padding:28px 24px 24px; position:relative; overflow:hidden; animation:cardIn 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes cardIn { from{opacity:0;transform:translateY(30px) scale(0.96)} to{opacity:1;transform:translateY(0) scale(1)} }
+.login-card::before { content:''; position:absolute; top:0; left:0; right:0; height:5px; background:linear-gradient(90deg,var(--amber2),var(--blue),var(--sky),var(--amber2)); background-size:200% 100%; animation:shimmer 3s linear infinite; }
+@keyframes shimmer { from{background-position:0 0} to{background-position:200% 0} }
+
+/* ── BRAND ── */
+.brand { display:flex; flex-direction:column; align-items:center; margin-bottom:22px; }
+.brand-mark { width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg,var(--navy),var(--navy2)); display:flex; align-items:center; justify-content:center; margin-bottom:14px; box-shadow:0 8px 24px rgba(15,31,61,0.25); position:relative; overflow:hidden; }
+.brand-mark::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 30% 30%,rgba(251,191,36,0.25) 0%,transparent 60%); }
+.brand-mark svg { position:relative; z-index:1; }
+.brand-name { font-family:'Unbounded',sans-serif; font-size:18px; font-weight:800; color:var(--navy); letter-spacing:1px; }
+.brand-tag { font-size:12px; color:var(--muted); margin-top:4px; }
+
+/* ── FORM ── */
+.form-title { font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; text-align:center; }
+.form-sub { font-size:12px; color:var(--muted); text-align:center; margin-bottom:20px; }
+.field { margin-bottom:12px; position:relative; }
+.field-label { font-size:11px; font-weight:700; color:var(--muted); letter-spacing:0.6px; text-transform:uppercase; margin-bottom:6px; display:block; }
+.field-input { width:100%; border:1.5px solid var(--border); border-radius:12px; padding:13px 44px 13px 14px; font-family:'Onest',sans-serif; font-size:14px; color:var(--text); background:var(--bg); outline:none; transition:border-color 0.2s ease,box-shadow 0.2s ease,background 0.2s ease; }
+.field-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(29,78,216,0.1); background:var(--surface); }
+.field-icon { position:absolute; right:14px; top:50%; margin-top:5px; color:var(--muted); cursor:pointer; transition:color 0.2s ease; }
+.field-icon:hover { color:var(--navy); }
+.field-input.error { border-color:var(--red); animation:shake 0.4s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+/* ── ROW ── */
+.form-row { display:flex; justify-content:space-between; align-items:center; margin:6px 0 16px; font-size:12px; }
+.remember { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; color:var(--muted); }
+.remember input { display:none; }
+.checkbox { width:18px; height:18px; border:1.5px solid var(--border); border-radius:5px; display:flex; align-items:center; justify-content:center; transition:all 0.2s ease; flex-shrink:0; }
+.remember input:checked + .checkbox { background:var(--blue); border-color:var(--blue); }
+.remember input:checked + .checkbox svg { opacity:1; }
+.checkbox svg { opacity:0; transition:opacity 0.2s ease; }
+.forgot { color:var(--blue); font-weight:600; text-decoration:none; transition:color 0.2s ease; }
+.forgot:hover { color:var(--sky); text-decoration:underline; }
+
+/* ── SUBMIT ── */
+.submit { width:100%; background:linear-gradient(135deg,var(--blue),var(--sky)); color:#fff; border:none; border-radius:14px; padding:15px; font-family:'Onest',sans-serif; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 6px 20px rgba(29,78,216,0.32); transition:transform 0.2s ease,box-shadow 0.2s ease; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; gap:10px; }
+.submit:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(29,78,216,0.4); }
+.submit:active { transform:scale(0.98); }
+.submit:disabled { opacity:0.6; cursor:wait; }
+.submit .spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.8s linear infinite; display:none; }
+.submit.loading .spinner { display:block; }
+.submit.loading .submit-arrow { display:none; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── DIVIDER ── */
+.divider { display:flex; align-items:center; gap:12px; margin:20px 0 14px; }
+.divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.divider span { font-size:11px; font-weight:700; letter-spacing:1.2px; color:var(--muted); text-transform:uppercase; }
+
+/* ── DEMO ACCOUNTS ── */
+.demo-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.demo-btn { background:var(--bg); border:1.5px solid var(--border); border-radius:14px; padding:14px 12px; cursor:pointer; transition:all 0.25s ease; text-align:left; display:flex; flex-direction:column; gap:8px; font-family:'Onest',sans-serif; }
+.demo-btn:hover { border-color:var(--navy); transform:translateY(-2px); box-shadow:0 6px 18px rgba(15,31,61,0.08); }
+.demo-btn:active { transform:scale(0.97); }
+.demo-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+.demo-btn.resident .demo-icon { background:linear-gradient(135deg,#dbeafe,#bfdbfe); color:var(--blue); }
+.demo-btn.manager  .demo-icon { background:linear-gradient(135deg,#fef3c7,#fde68a); color:var(--amber); }
+.demo-role { font-family:'Unbounded',sans-serif; font-size:11px; font-weight:800; letter-spacing:0.6px; color:var(--text); }
+.demo-meta { font-size:11px; color:var(--muted); line-height:1.4; }
+
+/* ── ERROR/INFO BOX ── */
+.notice { padding:11px 14px; border-radius:11px; font-size:12px; line-height:1.5; margin-bottom:14px; display:none; align-items:flex-start; gap:10px; }
+.notice.show { display:flex; animation:fadeIn 0.3s ease-out; }
+.notice.error { background:#fef2f2; color:#991b1b; border-left:3px solid var(--red); }
+.notice.info { background:#eff6ff; color:#1e40af; border-left:3px solid var(--sky); }
+@keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── FOOTER LINK ── */
+.signup-row { text-align:center; margin-top:18px; font-size:12px; color:var(--muted); }
+.signup-row a { color:var(--blue); font-weight:700; text-decoration:none; }
+.signup-row a:hover { text-decoration:underline; }
+
+/* ── BACKGROUND BRAND ── */
+.bg-brand { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:3; font-family:'Unbounded',sans-serif; font-size:10px; letter-spacing:2px; color:rgba(255,255,255,0.3); }
+
+@media (max-width:380px) {
+  .login-card { padding:24px 18px 20px; }
+  .demo-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-wrap"></div>
+<div class="grid-overlay"></div>
+
+<div class="page">
+  <div class="login-card">
+
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 21V9l9-6 9 6v12"/>
+          <path d="M9 21V13h6v8"/>
+          <line x1="3" y1="21" x2="21" y2="21"/>
+        </svg>
+      </div>
+      <div class="brand-name">НорДомСофт</div>
+      <div class="brand-tag">Управление на етажна собственост</div>
+    </div>
+
+    <div class="form-title">Добре дошли отново</div>
+    <div class="form-sub">Влезте във вашия акаунт, за да продължите</div>
+
+    <div id="notice" class="notice"></div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)" autocomplete="off">
+      <div class="field">
+        <label class="field-label" for="email">Имейл</label>
+        <input id="email" class="field-input" type="email" placeholder="вашият@имейл.bg" required />
+        <span class="field-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </span>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="password">Парола</label>
+        <input id="password" class="field-input" type="password" placeholder="••••••••" required />
+        <span class="field-icon" id="togglePass" onclick="togglePassword()">
+          <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </span>
+      </div>
+
+      <div class="form-row">
+        <label class="remember">
+          <input type="checkbox" id="remember" />
+          <span class="checkbox"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+          Запомни ме
+        </label>
+        <a href="#" class="forgot">Забравена парола?</a>
+      </div>
+
+      <button type="submit" class="submit" id="submitBtn">
+        <span class="submit-text">Вход в акаунта</span>
+        <svg class="submit-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <span class="spinner"></span>
+      </button>
+    </form>
+
+    <div class="divider"><span>Демо Акаунти</span></div>
+
+    <div class="demo-grid">
+      <button class="demo-btn resident" onclick="useDemo('resident')" type="button">
+        <div class="demo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div>
+          <div class="demo-role">ЖИТЕЛ</div>
+          <div class="demo-meta">Ап. 5 · Витоша 42</div>
+        </div>
+      </button>
+      <button class="demo-btn manager" onclick="useDemo('manager')" type="button">
+        <div class="demo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </div>
+        <div>
+          <div class="demo-role">ДОМООПРАВИТЕЛ</div>
+          <div class="demo-meta">3 сгради · 36 ап.</div>
+        </div>
+      </button>
+    </div>
+
+    <div class="signup-row">
+      Нямате акаунт? <a href="#">Регистрирайте се</a>
+    </div>
+
+  </div>
+</div>
+
+<div class="bg-brand">© 2025 НОРДОМСОФТ</div>
+
+<script>
+// ── DEMO ACCOUNTS (mock — no real DB) ──
+const demoAccounts = {
+  resident: {
+    email:    'jitel@demo.bg',
+    password: '1234',
+    redirect: 'NorDomSoft.html'
+  },
+  manager: {
+    email:    'upravitel@demo.bg',
+    password: '1234',
+    redirect: 'NorDomSoft-Manager.html'
+  }
+};
+
+function useDemo(role) {
+  const acc = demoAccounts[role];
+  document.getElementById('email').value = acc.email;
+  document.getElementById('password').value = acc.password;
+  showNotice('info', 'Попълнен демо акаунт. Натиснете „Вход" за да продължите.');
+}
+
+function togglePassword() {
+  const input = document.getElementById('password');
+  const icon  = document.getElementById('eyeIcon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    input.type = 'password';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+function showNotice(type, text) {
+  const el = document.getElementById('notice');
+  el.className = 'notice show ' + type;
+  el.innerHTML = (type === 'error'
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+  ) + '<div>' + text + '</div>';
+}
+
+function hideNotice() {
+  document.getElementById('notice').classList.remove('show');
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  hideNotice();
+
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const pass  = document.getElementById('password').value;
+  const btn   = document.getElementById('submitBtn');
+  const emailField = document.getElementById('email');
+  const passField  = document.getElementById('password');
+
+  // ── Mock authentication: route based on email ──
+  // Manager keywords → manager dashboard; everything else → resident dashboard
+  // Both demo passwords: "1234". Any other password → error.
+  let target = null;
+  let role = null;
+
+  if (pass !== '1234') {
+    emailField.classList.remove('error');
+    passField.classList.add('error');
+    showNotice('error', 'Грешен имейл или парола. За демо ползвайте паролата „1234".');
+    setTimeout(() => passField.classList.remove('error'), 500);
+    return;
+  }
+
+  const isManager =
+    email === demoAccounts.manager.email ||
+    /(upravitel|управител|domoupravitel|домооправител|admin|manager)/.test(email);
+
+  if (email === '' || !email.includes('@')) {
+    emailField.classList.add('error');
+    showNotice('error', 'Моля, въведете валиден имейл.');
+    setTimeout(() => emailField.classList.remove('error'), 500);
+    return;
+  }
+
+  if (isManager) {
+    target = demoAccounts.manager.redirect;
+    role = 'Домооправител';
+  } else {
+    target = demoAccounts.resident.redirect;
+    role = 'Жител';
+  }
+
+  // Simulate network call
+  btn.classList.add('loading');
+  btn.disabled = true;
+  showNotice('info', 'Влизане като ' + role + '...');
+
+  setTimeout(() => {
+    window.location.href = target;
+  }, 700);
+}
+</script>
+</body>
+</html>

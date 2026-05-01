@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>НорДомСофт · Домооправител</title>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700;800&family=Unbounded:wght@600;800&display=swap" rel="stylesheet" />
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root {
+  --navy:#0f1f3d; --navy2:#1a3260; --blue:#1d4ed8; --sky:#3b82f6;
+  --amber:#f59e0b; --amber2:#fbbf24; --green:#10b981; --red:#ef4444;
+  --orange:#f97316; --purple:#8b5cf6;
+  --bg:#f0f4ff; --surface:#ffffff; --border:#e2e8f7;
+  --text:#0f1f3d; --muted:#64748b;
+  --shadow:0 2px 16px rgba(15,31,61,0.06);
+  --shadow-hover:0 8px 30px rgba(15,31,61,0.12);
+  --tab-h:68px;
+  --sidebar:260px;
+}
+html,body { height:100%; font-family:'Onest',sans-serif; background:var(--bg); color:var(--text); }
+html { scroll-behavior:smooth; }
+.app { max-width:420px; min-height:100vh; margin:0 auto; background:var(--bg); display:flex; flex-direction:column; position:relative; }
+
+/* ── HEADER ── */
+.header { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 50%,#1e3a6e 100%); padding:16px 20px 22px; position:relative; overflow:hidden; }
+.header::before { content:''; position:absolute; top:-50px; right:-50px; width:200px; height:200px; background:radial-gradient(circle,rgba(59,130,246,0.15) 0%,transparent 70%); border-radius:50%; animation:headerOrb 8s ease-in-out infinite alternate; }
+.header::after { content:''; position:absolute; bottom:-30px; left:-20px; width:120px; height:120px; background:radial-gradient(circle,rgba(251,191,36,0.08) 0%,transparent 70%); border-radius:50%; }
+@keyframes headerOrb { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(-20px,15px) scale(1.15)} }
+.header-top { display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:1; gap:12px; }
+.header-brand { font-family:'Unbounded',sans-serif; font-size:13px; color:var(--amber2); letter-spacing:2px; margin-bottom:2px; }
+.header-name { font-size:15px; font-weight:600; color:#fff; }
+.header-role { font-size:12px; color:rgba(255,255,255,0.55); margin-top:2px; }
+.header-bell { width:38px; height:38px; background:rgba(255,255,255,0.1); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#fff; position:relative; flex-shrink:0; transition:background 0.2s,transform 0.2s; }
+.header-bell:hover { background:rgba(255,255,255,0.18); }
+.header-bell:active { transform:scale(0.9); }
+.header-bell .dot { position:absolute; top:7px; right:7px; width:8px; height:8px; background:var(--amber); border-radius:50%; border:2px solid var(--navy); animation:bellPulse 2s ease-in-out infinite; }
+@keyframes bellPulse { 0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,0.5)} 50%{box-shadow:0 0 0 5px rgba(245,158,11,0)} }
+.status-row { display:flex; align-items:center; gap:6px; margin-top:6px; position:relative; z-index:1; }
+.status-dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:statusBlink 3s ease-in-out infinite; }
+@keyframes statusBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.status-text { font-size:11px; color:rgba(255,255,255,0.5); }
+
+/* ── BUILDING SWITCHER (in header) ── */
+.bld-switch-row { display:flex; gap:8px; margin-top:14px; overflow-x:auto; scrollbar-width:none; position:relative; z-index:1; padding-bottom:2px; }
+.bld-switch-row::-webkit-scrollbar { display:none; }
+.bld-chip { border:1px solid rgba(255,255,255,0.12); border-radius:99px; padding:7px 14px; font-family:'Onest',sans-serif; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; background:rgba(255,255,255,0.05); color:rgba(255,255,255,0.7); transition:all 0.25s ease; flex-shrink:0; }
+.bld-chip:hover:not(.active) { background:rgba(255,255,255,0.12); color:#fff; }
+.bld-chip.active { background:var(--amber2); color:var(--navy); border-color:var(--amber2); font-weight:700; }
+
+/* ── SCROLL ── */
+.scroll-content { flex:1; overflow-y:auto; padding-bottom:calc(var(--tab-h) + 12px); -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.scroll-content::-webkit-scrollbar { display:none; }
+.screen { display:none; opacity:0; transform:translateY(8px); }
+.screen.active { display:block; animation:screenIn 0.35s ease-out forwards; }
+@keyframes screenIn { to{opacity:1;transform:translateY(0)} }
+
+/* ── SECTION ── */
+.section { padding:16px 16px 0; }
+.section-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.section-label { font-size:11px; font-weight:700; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; }
+.section-action { font-size:11px; font-weight:700; color:var(--blue); cursor:pointer; letter-spacing:0.3px; }
+.section-action:hover { text-decoration:underline; }
+
+/* ── CARD ── */
+.card { background:var(--surface); border-radius:16px; box-shadow:var(--shadow); overflow:hidden; transition:box-shadow 0.3s ease,transform 0.3s ease; }
+.card:hover { box-shadow:var(--shadow-hover); }
+.card+.card { margin-top:10px; }
+
+/* ── KPI GRID ── */
+.kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.kpi-card { padding:14px; }
+.kpi-icon-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.kpi-icon { width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.kpi-icon.blue { background:#eff6ff; color:var(--blue); }
+.kpi-icon.green { background:#ecfdf5; color:var(--green); }
+.kpi-icon.amber { background:#fff8eb; color:var(--amber); }
+.kpi-icon.red { background:#fef2f2; color:var(--red); }
+.kpi-icon.purple { background:#f5f3ff; color:var(--purple); }
+.kpi-label { font-size:11px; color:var(--muted); font-weight:600; letter-spacing:0.3px; text-transform:uppercase; }
+.kpi-value { font-family:'Unbounded',sans-serif; font-size:22px; font-weight:800; color:var(--navy); line-height:1; }
+.kpi-sub { font-size:11px; color:var(--muted); margin-top:4px; }
+.kpi-trend { font-size:11px; font-weight:700; }
+.kpi-trend.up { color:var(--green); }
+.kpi-trend.down { color:var(--red); }
+
+/* ── CASH HERO ── */
+.cash-hero { background:linear-gradient(135deg,var(--navy) 0%,#162d5a 60%,#1e3a6e 100%); border-radius:20px; padding:22px; color:#fff; position:relative; overflow:hidden; }
+.cash-hero::before { content:''; position:absolute; top:-30px; right:-20px; width:160px; height:160px; background:radial-gradient(circle,rgba(59,130,246,0.22) 0%,transparent 70%); border-radius:50%; }
+.cash-hero::after { content:''; position:absolute; bottom:-20px; left:30px; width:100px; height:100px; background:radial-gradient(circle,rgba(251,191,36,0.1) 0%,transparent 70%); border-radius:50%; }
+.cash-hero-label { font-size:10px; font-weight:700; letter-spacing:2px; color:var(--amber2); text-transform:uppercase; margin-bottom:6px; position:relative; }
+.cash-hero-amount { font-family:'Unbounded',sans-serif; font-size:34px; font-weight:800; line-height:1; position:relative; }
+.cash-hero-amount span { font-size:17px; font-weight:600; color:rgba(255,255,255,0.6); margin-left:4px; }
+.cash-hero-row { display:flex; gap:18px; margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.12); position:relative; }
+.cash-hero-mini-label { font-size:10px; color:rgba(255,255,255,0.5); margin-bottom:3px; letter-spacing:0.4px; }
+.cash-hero-mini-val { font-size:15px; font-weight:700; }
+
+/* ── BUILDING CARD ── */
+.building-card { padding:16px; cursor:pointer; transition:transform 0.2s ease; }
+.building-card:hover { transform:translateY(-2px); }
+.building-top { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px; }
+.building-name { font-size:14px; font-weight:700; color:var(--text); line-height:1.3; }
+.building-addr { font-size:11px; color:var(--muted); margin-top:3px; }
+.building-pin { width:36px; height:36px; border-radius:11px; background:linear-gradient(135deg,var(--navy),var(--navy2)); display:flex; align-items:center; justify-content:center; color:var(--amber2); font-family:'Unbounded',sans-serif; font-size:13px; font-weight:800; flex-shrink:0; }
+.building-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:10px 0 0; border-top:1px solid var(--border); }
+.bs-cell { text-align:center; }
+.bs-val { font-family:'Unbounded',sans-serif; font-size:14px; font-weight:700; color:var(--navy); }
+.bs-lab { font-size:10px; color:var(--muted); margin-top:2px; letter-spacing:0.3px; }
+.bs-bar-wrap { height:5px; background:var(--bg); border-radius:99px; overflow:hidden; margin-top:10px; }
+.bs-bar { height:100%; background:linear-gradient(90deg,var(--green),#34d399); border-radius:99px; }
+.bs-bar.amber { background:linear-gradient(90deg,var(--amber),var(--amber2)); }
+.bs-bar.red { background:linear-gradient(90deg,var(--red),#f87171); }
+.bs-bar-row { display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-top:6px; font-weight:600; }
+
+/* ── ALERTS ── */
+.alert { display:flex; gap:12px; padding:13px 14px; border-radius:12px; transition:transform 0.2s ease; }
+.alert+.alert { margin-top:8px; }
+.alert:hover { transform:translateX(4px); }
+.alert.urgent { background:#fef2f2; border-left:3px solid var(--red); }
+.alert.warning { background:#fff8eb; border-left:3px solid var(--amber); }
+.alert.info { background:#eff6ff; border-left:3px solid var(--sky); }
+.alert-dot { width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+.alert.urgent .alert-dot { background:var(--red); animation:bellPulse 1.5s ease-in-out infinite; }
+.alert.warning .alert-dot { background:var(--amber); }
+.alert.info .alert-dot { background:var(--sky); }
+.alert-body { flex:1; min-width:0; }
+.alert-title { font-size:13px; font-weight:700; color:var(--text); margin-bottom:3px; }
+.alert-text { font-size:12px; color:var(--muted); line-height:1.4; }
+.alert-tag { display:inline-block; padding:2px 7px; border-radius:5px; font-size:9px; font-weight:800; letter-spacing:0.6px; background:rgba(15,31,61,0.08); color:var(--navy); margin-right:5px; }
+
+/* ── CTA ROW ── */
+.cta-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:14px 16px; }
+.cta-btn { border:none; border-radius:14px; padding:14px 12px; cursor:pointer; font-family:'Onest',sans-serif; font-weight:700; font-size:13px; display:flex; flex-direction:column; align-items:center; gap:8px; transition:transform 0.2s ease,box-shadow 0.2s ease; position:relative; overflow:hidden; }
+.cta-btn:hover { transform:translateY(-2px); }
+.cta-btn:active { transform:scale(0.96); }
+.cta-btn.primary { background:linear-gradient(135deg,var(--blue),var(--sky)); color:#fff; box-shadow:0 6px 20px rgba(29,78,216,0.32); }
+.cta-btn.success { background:linear-gradient(135deg,var(--green),#34d399); color:#fff; box-shadow:0 6px 20px rgba(16,185,129,0.3); }
+.cta-btn.amber { background:linear-gradient(135deg,#d97706,var(--amber)); color:#fff; box-shadow:0 6px 20px rgba(245,158,11,0.3); }
+.cta-btn.purple { background:linear-gradient(135deg,#7c3aed,var(--purple)); color:#fff; box-shadow:0 6px 20px rgba(139,92,246,0.3); }
+.cta-icon { width:30px; height:30px; background:rgba(255,255,255,0.18); border-radius:9px; display:flex; align-items:center; justify-content:center; }
+
+/* ── LIST ITEM ── */
+.list-item { display:flex; align-items:center; gap:12px; padding:13px 16px; border-bottom:1px solid var(--border); transition:background 0.2s ease; }
+.list-item:last-child { border-bottom:none; }
+.list-item:hover { background:rgba(59,130,246,0.03); }
+.li-icon { width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:transform 0.2s ease; }
+.list-item:hover .li-icon { transform:scale(1.08); }
+.li-icon.blue { background:#eff6ff; color:var(--blue); }
+.li-icon.amber { background:#fff8eb; color:var(--amber); }
+.li-icon.green { background:#ecfdf5; color:var(--green); }
+.li-icon.red { background:#fef2f2; color:var(--red); }
+.li-icon.purple { background:#f5f3ff; color:var(--purple); }
+.li-body { flex:1; min-width:0; }
+.li-title { font-size:14px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; }
+.li-sub { font-size:12px; color:var(--muted); margin-top:1px; }
+.li-right { text-align:right; flex-shrink:0; }
+.li-amount { font-size:14px; font-weight:700; color:var(--text); }
+.li-amount.pos { color:var(--green); }
+.li-amount.neg { color:var(--red); }
+.li-meta { font-size:10px; color:var(--muted); margin-top:2px; font-weight:600; letter-spacing:0.3px; }
+
+/* ── BADGE ── */
+.badge { display:inline-block; border-radius:6px; padding:3px 8px; font-size:10px; font-weight:800; letter-spacing:0.8px; text-transform:uppercase; }
+.badge.paid { background:#ecfdf5; color:#065f46; }
+.badge.unpaid { background:#fef2f2; color:#991b1b; }
+.badge.overdue { background:#fff3cd; color:#92400e; animation:badgeBlink 2s ease-in-out infinite; }
+@keyframes badgeBlink { 0%,100%{opacity:1} 50%{opacity:0.65} }
+.badge.sig-new { background:#fef2f2; color:#991b1b; }
+.badge.inprogress { background:#fff8eb; color:#92400e; }
+.badge.resolved { background:#ecfdf5; color:#065f46; }
+.badge.active-v { background:#eff6ff; color:#1e40af; }
+.badge.closed-v { background:#f1f5f9; color:#475569; }
+.badge.tag { background:rgba(15,31,61,0.06); color:var(--navy); }
+
+/* ── PAGE HEADER ── */
+.page-head { background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 50%,#1e3a6e 100%); border-radius:0 0 20px 20px; padding:14px 16px 20px; position:relative; overflow:hidden; }
+.page-head::before { content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle,rgba(59,130,246,0.12) 0%,transparent 70%); border-radius:50%; }
+.page-title { font-family:'Unbounded',sans-serif; font-size:15px; font-weight:800; color:#fff; position:relative; }
+.page-subtitle { font-size:12px; color:rgba(255,255,255,0.5); margin-top:4px; position:relative; }
+.page-summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; position:relative; }
+.page-summary-cell { background:rgba(255,255,255,0.08); border-radius:12px; padding:12px 10px; text-align:center; border:1px solid rgba(255,255,255,0.06); }
+.page-summary-val { font-family:'Unbounded',sans-serif; font-size:14px; font-weight:700; color:#fff; }
+.page-summary-lab { font-size:10px; color:rgba(255,255,255,0.5); margin-top:3px; letter-spacing:0.5px; }
+
+/* ── FILTER CHIPS ── */
+.filter-row { display:flex; gap:8px; padding:14px 16px 4px; overflow-x:auto; scrollbar-width:none; }
+.filter-row::-webkit-scrollbar { display:none; }
+.filter-chip { border:1.5px solid var(--border); border-radius:99px; padding:6px 14px; font-family:'Onest',sans-serif; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; background:var(--surface); color:var(--muted); transition:all 0.25s ease; flex-shrink:0; }
+.filter-chip:hover:not(.active) { border-color:var(--sky); color:var(--sky); background:#eff6ff; }
+.filter-chip.active { background:var(--navy); color:#fff; border-color:var(--navy); box-shadow:0 3px 12px rgba(15,31,61,0.2); }
+
+/* ── SIGNAL CARD ── */
+.signal-card { padding:16px; }
+.signal-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; gap:8px; flex-wrap:wrap; }
+.signal-title { font-size:14px; font-weight:700; color:var(--text); margin:6px 0 4px; line-height:1.3; }
+.signal-desc { font-size:12px; color:var(--muted); line-height:1.5; margin-bottom:10px; }
+.signal-meta-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:11px; color:var(--muted); margin-bottom:10px; }
+.signal-meta-row .dot-sep { width:3px; height:3px; border-radius:50%; background:var(--border); }
+.priority-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.p-high { background:var(--red); animation:bellPulse 1.5s ease-in-out infinite; }
+.p-mid { background:var(--amber); }
+.p-low { background:var(--green); }
+.signal-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding-top:10px; border-top:1px solid var(--border); }
+.s-btn { border:1.5px solid var(--border); border-radius:9px; padding:8px 10px; font-family:'Onest',sans-serif; font-size:12px; font-weight:700; cursor:pointer; background:transparent; color:var(--text); transition:all 0.2s ease; }
+.s-btn:hover { border-color:var(--navy); color:var(--navy); transform:translateY(-1px); }
+.s-btn.primary { border-color:var(--blue); color:var(--blue); }
+.s-btn.primary:hover { background:var(--blue); color:#fff; }
+.s-btn.success { border-color:var(--green); color:var(--green); }
+.s-btn.success:hover { background:var(--green); color:#fff; }
+
+/* ── APT GRID ── */
+.apt-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:6px; }
+.apt-cell { padding:11px 10px; border-radius:10px; border:1px solid var(--border); background:var(--surface); display:flex; align-items:center; gap:10px; transition:all 0.2s ease; cursor:pointer; }
+.apt-cell:hover { border-color:var(--sky); transform:translateY(-2px); box-shadow:0 4px 12px rgba(59,130,246,0.1); }
+.apt-num { width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-family:'Unbounded',sans-serif; font-size:11px; font-weight:800; flex-shrink:0; }
+.apt-num.paid { background:#ecfdf5; color:#065f46; }
+.apt-num.unpaid { background:#fef2f2; color:#991b1b; }
+.apt-num.overdue { background:#fff3cd; color:#92400e; }
+.apt-info { flex:1; min-width:0; }
+.apt-name { font-size:12px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.apt-status { font-size:10px; color:var(--muted); margin-top:1px; }
+
+/* ── BUDGET / COLLECT ── */
+.collect-stat { margin-bottom:14px; }
+.collect-stat:last-child { margin-bottom:0; }
+.collect-label { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; align-items:center; }
+.collect-pct { font-size:12px; font-weight:700; color:var(--navy); }
+.collect-bar-wrap { height:8px; background:var(--bg); border-radius:99px; overflow:hidden; margin-top:4px; }
+.collect-bar { height:100%; background:var(--amber2); border-radius:99px; transition:width 0.6s ease; }
+.collect-bar.green { background:#22c55e; }
+.collect-bar.red { background:var(--red); }
+
+/* ── REVEAL ── */
+.reveal { opacity:0; transform:translateY(16px); transition:opacity 0.45s ease,transform 0.45s ease; }
+.reveal.visible { opacity:1; transform:translateY(0); }
+
+/* ── TAB BAR ── */
+.tab-bar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:420px; height:var(--tab-h); background:rgba(255,255,255,0.92); backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%); border-top:1px solid rgba(226,232,247,0.6); display:flex; align-items:flex-start; padding-top:8px; z-index:100; box-shadow:0 -4px 30px rgba(15,31,61,0.06); }
+.tab-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; padding:4px 0; transition:transform 0.15s ease; }
+.tab-item:active { transform:scale(0.9); }
+.tab-icon-wrap { width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+.tab-item.active .tab-icon-wrap { background:var(--navy); box-shadow:0 3px 10px rgba(15,31,61,0.25); transform:translateY(-2px); }
+.tab-item.active .tab-icon-wrap svg { stroke:#fff; }
+.tab-item:not(.active) .tab-icon-wrap svg { stroke:var(--muted); transition:stroke 0.2s ease; }
+.tab-item:not(.active):hover .tab-icon-wrap svg { stroke:var(--navy); }
+.tab-label { font-size:10px; font-weight:600; letter-spacing:0.3px; }
+.tab-item.active .tab-label { color:var(--navy); }
+.tab-item:not(.active) .tab-label { color:var(--muted); }
+
+/* ── FAB ── */
+.fab { position:fixed; bottom:calc(var(--tab-h) + 16px); right:20px; width:54px; height:54px; background:linear-gradient(135deg,var(--blue),var(--sky)); border-radius:16px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 22px rgba(29,78,216,0.42); cursor:pointer; z-index:90; transition:transform 0.2s ease,box-shadow 0.2s ease; border:none; }
+.fab:hover { transform:translateY(-3px) rotate(90deg); box-shadow:0 10px 30px rgba(29,78,216,0.5); }
+.fab:active { transform:scale(0.93) rotate(90deg); }
+
+/* ── MODAL ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; display:flex; align-items:flex-end; justify-content:center; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); animation:fadeIn 0.25s ease-out; }
+.modal { background:var(--surface); border-radius:24px 24px 0 0; width:100%; max-width:420px; padding:24px 20px 40px; animation:slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+.modal-handle { width:40px; height:4px; background:var(--border); border-radius:99px; margin:0 auto 20px; }
+.modal-title { font-family:'Unbounded',sans-serif; font-size:16px; font-weight:800; margin-bottom:16px; }
+.modal-input { width:100%; border:1.5px solid var(--border); border-radius:12px; padding:13px 14px; font-family:'Onest',sans-serif; font-size:14px; color:var(--text); background:var(--bg); margin-bottom:12px; outline:none; transition:border-color 0.2s ease; }
+.modal-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(29,78,216,0.1); }
+textarea.modal-input { min-height:90px; resize:none; }
+.modal-submit { width:100%; background:linear-gradient(135deg,var(--blue),var(--sky)); color:#fff; border:none; border-radius:14px; padding:15px; font-family:'Onest',sans-serif; font-size:15px; font-weight:700; cursor:pointer; margin-top:4px; transition:transform 0.2s ease,box-shadow 0.2s ease; box-shadow:0 4px 15px rgba(29,78,216,0.3); }
+.modal-submit:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(29,78,216,0.4); }
+.hidden { display:none; }
+.pb { height:20px; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+/* ── RIPPLE ── */
+.ripple { position:absolute; border-radius:50%; background:rgba(255,255,255,0.35); transform:scale(0); animation:rippleAnim 0.5s ease-out; pointer-events:none; }
+@keyframes rippleAnim { to{transform:scale(4);opacity:0} }
+
+/* ── ACTIVITY ITEM ── */
+.activity-item { display:flex; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); }
+.activity-item:last-child { border-bottom:none; }
+.activity-dot { width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+.activity-dot.green { background:var(--green); }
+.activity-dot.amber { background:var(--amber); }
+.activity-dot.red { background:var(--red); }
+.activity-dot.blue { background:var(--blue); }
+.activity-body { flex:1; min-width:0; }
+.activity-text { font-size:13px; color:var(--text); line-height:1.4; }
+.activity-text b { font-weight:700; }
+.activity-time { font-size:11px; color:var(--muted); margin-top:2px; }
+
+/* ── SEGMENT (toggle) ── */
+.segment { display:inline-flex; background:var(--bg); border-radius:11px; padding:4px; gap:2px; margin-bottom:12px; }
+.segment-btn { border:none; background:transparent; padding:8px 14px; font-family:'Onest',sans-serif; font-size:12px; font-weight:700; color:var(--muted); border-radius:8px; cursor:pointer; transition:all 0.2s ease; }
+.segment-btn.active { background:var(--surface); color:var(--navy); box-shadow:0 1px 3px rgba(15,31,61,0.08); }
+
+.mobile-only { display:block; }
+.desktop-only { display:none; }
+
+/* ════════════════════════════════
+   RESPONSIVE: DESKTOP (>=900px)
+   ════════════════════════════════ */
+@media (min-width:900px) {
+  body { background:#e8edf5; }
+  .app { max-width:none; margin:0; padding-left:var(--sidebar); min-height:100vh; background:transparent; }
+
+  /* SIDEBAR */
+  .tab-bar { position:fixed; top:0; left:0; bottom:0; width:var(--sidebar); max-width:var(--sidebar); height:100vh; flex-direction:column; align-items:stretch; padding:0; border-top:none; background:var(--navy); transform:none; box-shadow:none; }
+  .tab-bar::before { content:'НорДомСофт · УПРАВИТЕЛ'; display:block; padding:28px 24px 24px; font-family:'Unbounded',sans-serif; font-size:13px; font-weight:800; color:var(--amber2); letter-spacing:1.5px; border-bottom:1px solid rgba(255,255,255,0.08); }
+  .tab-item { flex:none; flex-direction:row; gap:14px; padding:13px 24px; border-radius:0; transition:background 0.2s ease; }
+  .tab-item:active { transform:none; }
+  .tab-item:hover { background:rgba(255,255,255,0.06); }
+  .tab-item.active { background:rgba(255,255,255,0.1); border-left:3px solid var(--amber2); padding-left:21px; }
+  .tab-icon-wrap { width:34px; height:34px; background:transparent !important; box-shadow:none !important; transform:none !important; }
+  .tab-item .tab-icon-wrap svg { stroke:rgba(255,255,255,0.45) !important; }
+  .tab-item.active .tab-icon-wrap svg { stroke:#fff !important; }
+  .tab-label { font-size:14px; font-weight:500; color:rgba(255,255,255,0.5); }
+  .tab-item.active .tab-label { color:#fff; font-weight:700; }
+  .tab-item:hover .tab-label { color:rgba(255,255,255,0.8); }
+
+  /* HEADER */
+  .header { background:var(--surface); padding:18px 36px 0; box-shadow:0 1px 0 var(--border); border-radius:0; }
+  .header::before, .header::after { display:none; }
+  .header-brand { display:none; }
+  .header-name { color:var(--text); font-size:17px; }
+  .header-role { color:var(--muted); font-size:13px; }
+  .status-row .status-text { color:var(--muted); }
+  .header-bell { background:var(--bg); }
+  .header-bell svg { stroke:var(--navy) !important; }
+  .header-bell .dot { border-color:var(--surface); }
+  .bld-switch-row { padding:14px 0 16px; border-top:1px solid var(--border); margin-top:14px; }
+  .bld-chip { border-color:var(--border); background:var(--surface); color:var(--muted); }
+  .bld-chip:hover:not(.active) { background:var(--bg); color:var(--navy); border-color:var(--navy); }
+  .bld-chip.active { background:var(--navy); color:#fff; border-color:var(--navy); }
+
+  /* CONTENT */
+  .scroll-content { padding:24px 36px 36px; background:transparent; }
+  .screen { background:transparent; }
+  .section { padding:0; margin-bottom:24px; }
+  .pb { height:0; }
+  .reveal { opacity:1 !important; transform:none !important; }
+
+  /* GRIDS */
+  .kpi-grid { grid-template-columns:repeat(4,1fr); gap:14px; }
+  .kpi-card { padding:18px; }
+  .kpi-value { font-size:26px; }
+  .buildings-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .alerts-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .alerts-grid .alert + .alert { margin-top:0; }
+  .home-twocol { display:grid; grid-template-columns:2fr 1fr; gap:24px; align-items:start; }
+  .signals-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .signals-grid > .card { margin-bottom:0 !important; }
+  .fin-cols { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
+  .fin-cols > .section { padding:0; margin-bottom:0; }
+  .residents-cols { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .residents-cols > .section { padding:0; margin-bottom:0; }
+
+  /* PAGE HEAD */
+  .page-head { background:var(--surface); border-radius:14px; padding:24px; border:1px solid var(--border); box-shadow:0 1px 3px rgba(15,31,61,0.04); }
+  .page-head::before { display:none; }
+  .page-title { color:var(--text); font-size:18px; }
+  .page-subtitle { color:var(--muted); }
+  .page-summary-cell { background:var(--bg); border:1px solid var(--border); }
+  .page-summary-val { color:var(--navy); font-size:18px; }
+  .page-summary-lab { color:var(--muted); }
+
+  /* APT GRID — wider */
+  .apt-grid { grid-template-columns:repeat(4,1fr); }
+
+  .filter-row { padding:0 0 16px; }
+  .mobile-only { display:none !important; }
+  .desktop-only { display:block !important; }
+
+  .fab { right:48px; bottom:36px; }
+  .modal-overlay { align-items:center; }
+  .modal { border-radius:20px; max-width:520px; padding:28px 24px 32px; }
+}
+
+@media (min-width:1280px) {
+  .scroll-content { padding:28px 48px 48px; }
+  .kpi-card { padding:20px; }
+  .kpi-value { font-size:30px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ─── HEADER ─── -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-brand">НорДомСофт · УПРАВИТЕЛ</div>
+        <div class="header-name">Красимир Ангелов</div>
+        <div class="header-role" id="headerRole">Домооправител · 3 сгради · 36 апартамента</div>
+        <div class="status-row"><div class="status-dot"></div><span class="status-text">Всичко синхронизирано</span></div>
+      </div>
+      <div class="header-bell">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <div class="dot"></div>
+      </div>
+    </div>
+
+    <!-- Building selector -->
+    <div class="bld-switch-row">
+      <button class="bld-chip active" onclick="setBuilding(this,'all')">Всички сгради</button>
+      <button class="bld-chip" onclick="setBuilding(this,'b1')">Витоша 42 · Вх. А</button>
+      <button class="bld-chip" onclick="setBuilding(this,'b2')">Раковски 18</button>
+      <button class="bld-chip" onclick="setBuilding(this,'b3')">Младост 1, бл. 23</button>
+    </div>
+  </div>
+
+  <!-- ─── SCROLL CONTENT ─── -->
+  <div class="scroll-content">
+
+    <!-- ═══ SCREEN: DASHBOARD ═══ -->
+    <div id="screen-home" class="screen active">
+
+      <!-- KPI ROW -->
+      <div class="section reveal">
+        <div class="kpi-grid">
+          <div class="card kpi-card">
+            <div class="kpi-icon-row">
+              <div class="kpi-icon green"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+              <div class="kpi-label">Общо в касите</div>
+            </div>
+            <div class="kpi-value" id="kpiCash">5 247<span style="font-size:14px;color:var(--muted);font-weight:600">&nbsp;лв</span></div>
+            <div class="kpi-sub" id="kpiCashSub"><span class="kpi-trend up">↑ 12%</span> спрямо м.м.</div>
+          </div>
+          <div class="card kpi-card">
+            <div class="kpi-icon-row">
+              <div class="kpi-icon blue"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></div>
+              <div class="kpi-label">Резервен фонд</div>
+            </div>
+            <div class="kpi-value" id="kpiReserve">12 840<span style="font-size:14px;color:var(--muted);font-weight:600">&nbsp;лв</span></div>
+            <div class="kpi-sub" id="kpiReserveSub">Сумарно за 3 сгради</div>
+          </div>
+          <div class="card kpi-card">
+            <div class="kpi-icon-row">
+              <div class="kpi-icon amber"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+              <div class="kpi-label">Събираемост</div>
+            </div>
+            <div class="kpi-value" id="kpiCollection">78<span style="font-size:14px;color:var(--muted);font-weight:600">%</span></div>
+            <div class="kpi-sub" id="kpiCollectionSub">Юли 2025 · 28 от 36 ап.</div>
+          </div>
+          <div class="card kpi-card">
+            <div class="kpi-icon-row">
+              <div class="kpi-icon red"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+              <div class="kpi-label">Активни сигнали</div>
+            </div>
+            <div class="kpi-value" id="kpiSignals">7</div>
+            <div class="kpi-sub" id="kpiSignalsSub"><span class="kpi-trend up" style="color:var(--red)">2 спешни</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-twocol">
+        <!-- LEFT COLUMN -->
+        <div>
+          <!-- BUILDINGS -->
+          <div class="section reveal">
+            <div class="section-head">
+              <div class="section-label">Моите Сгради</div>
+              <span class="section-action" onclick="switchTab('buildings')">Виж всички →</span>
+            </div>
+            <div class="buildings-grid">
+              <!-- Building 1 -->
+              <div class="card building-card" data-building="b1" onclick="setBuildingById('b1')">
+                <div class="building-top">
+                  <div>
+                    <div class="building-name">бул. Витоша 42</div>
+                    <div class="building-addr">Вх. А · 8 апартамента</div>
+                  </div>
+                  <div class="building-pin">В1</div>
+                </div>
+                <div class="bs-bar-wrap"><div class="bs-bar" style="width:75%"></div></div>
+                <div class="bs-bar-row"><span>Събираемост</span><span>75%</span></div>
+                <div class="building-stats">
+                  <div class="bs-cell"><div class="bs-val">847 лв</div><div class="bs-lab">КАСА</div></div>
+                  <div class="bs-cell"><div class="bs-val" style="color:var(--red)">2</div><div class="bs-lab">СИГНАЛИ</div></div>
+                  <div class="bs-cell"><div class="bs-val" style="color:var(--blue)">2</div><div class="bs-lab">ГЛАСУВ.</div></div>
+                </div>
+              </div>
+
+              <!-- Building 2 -->
+              <div class="card building-card" data-building="b2" onclick="setBuildingById('b2')">
+                <div class="building-top">
+                  <div>
+                    <div class="building-name">ул. Раковски 18</div>
+                    <div class="building-addr">12 апартамента</div>
+                  </div>
+                  <div class="building-pin">Р18</div>
+                </div>
+                <div class="bs-bar-wrap"><div class="bs-bar amber" style="width:67%"></div></div>
+                <div class="bs-bar-row"><span>Събираемост</span><span>67%</span></div>
+                <div class="building-stats">
+                  <div class="bs-cell"><div class="bs-val">1 420 лв</div><div class="bs-lab">КАСА</div></div>
+                  <div class="bs-cell"><div class="bs-val" style="color:var(--red)">3</div><div class="bs-lab">СИГНАЛИ</div></div>
+                  <div class="bs-cell"><div class="bs-val" style="color:var(--blue)">1</div><div class="bs-lab">ГЛАСУВ.</div></div>
+                </div>
+              </div>
+
+              <!-- Building 3 -->
+              <div class="card building-card" data-building="b3" onclick="setBuildingById('b3')">
+                <div class="building-top">
+                  <div>
+                    <div class="building-name">Младост 1, бл. 23</div>
+                    <div class="building-addr">Вх. Б · 16 апартамента</div>
+                  </div>
+                  <div class="building-pin">М23</div>
+                </div>
+                <div class="bs-bar-wrap"><div class="bs-bar" style="width:88%"></div></div>
+                <div class="bs-bar-row"><span>Събираемост</span><span>88%</span></div>
+                <div class="building-stats">
+                  <div class="bs-cell"><div class="bs-val">2 980 лв</div><div class="bs-lab">КАСА</div></div>
+                  <div class="bs-cell"><div class="bs-val" style="color:var(--amber)">2</div><div class="bs-lab">СИГНАЛИ</div></div>
+                  <div class="bs-cell"><div class="bs-val" style="color:var(--blue)">1</div><div class="bs-lab">ГЛАСУВ.</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ALERTS -->
+          <div class="section reveal">
+            <div class="section-head">
+              <div class="section-label">Изискват Внимание</div>
+              <span class="section-action">Виж всички →</span>
+            </div>
+            <div class="alerts-grid" id="alertsGrid">
+              <div class="alert urgent" data-building="b1">
+                <div class="alert-dot"></div>
+                <div class="alert-body">
+                  <div class="alert-title">Теч от таван – ет. 4</div>
+                  <div class="alert-text"><span class="alert-tag">Витоша 42</span>Висок приоритет · 3 дни без действие</div>
+                </div>
+              </div>
+              <div class="alert urgent" data-building="b2">
+                <div class="alert-dot"></div>
+                <div class="alert-body">
+                  <div class="alert-title">Аварийна ВиК на партера</div>
+                  <div class="alert-text"><span class="alert-tag">Раковски 18</span>Подаден днес · спешен оглед</div>
+                </div>
+              </div>
+              <div class="alert warning" data-building="all">
+                <div class="alert-dot"></div>
+                <div class="alert-body">
+                  <div class="alert-title">3 апартамента с просрочие &gt; 60 дни</div>
+                  <div class="alert-text">Общо 720 лв задължения · нужна напомняща нотификация</div>
+                </div>
+              </div>
+              <div class="alert info" data-building="b1">
+                <div class="alert-dot"></div>
+                <div class="alert-body">
+                  <div class="alert-title">Общо събрание · Витоша 42</div>
+                  <div class="alert-text">18 Юли, 18:30 ч. · подгответе материали</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- QUICK ACTIONS -->
+          <div class="section reveal">
+            <div class="section-label" style="padding:0 16px">Бързи Действия</div>
+            <div class="cta-row">
+              <button class="cta-btn primary" onclick="openModal('notice')">
+                <div class="cta-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg></div>
+                Изпрати известие
+              </button>
+              <button class="cta-btn success" onclick="openModal('payment')">
+                <div class="cta-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                Маркирай плащане
+              </button>
+              <button class="cta-btn amber" onclick="openModal('expense')">
+                <div class="cta-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+                Добави разход
+              </button>
+              <button class="cta-btn purple" onclick="openModal('vote')">
+                <div class="cta-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg></div>
+                Стартирай гласуване
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div>
+          <!-- ACTIVITY FEED -->
+          <div class="section reveal">
+            <div class="section-label" style="padding:0 0 10px">Последна Активност</div>
+            <div class="card" id="activityList">
+              <div class="activity-item" data-building="b1">
+                <div class="activity-dot green"></div>
+                <div class="activity-body">
+                  <div class="activity-text"><b>Ап. 4 (Витоша 42)</b> плати юлската такса – 50 лв</div>
+                  <div class="activity-time">преди 12 минути</div>
+                </div>
+              </div>
+              <div class="activity-item" data-building="b2">
+                <div class="activity-dot red"></div>
+                <div class="activity-body">
+                  <div class="activity-text">Нов сигнал от <b>Ап. 7 (Раковски 18)</b>: Аварийна ВиК</div>
+                  <div class="activity-time">преди 1 час</div>
+                </div>
+              </div>
+              <div class="activity-item" data-building="b1">
+                <div class="activity-dot blue"></div>
+                <div class="activity-body">
+                  <div class="activity-text">Гласуване „Подмяна на врата" – 5 нови гласа</div>
+                  <div class="activity-time">преди 3 часа</div>
+                </div>
+              </div>
+              <div class="activity-item" data-building="b1">
+                <div class="activity-dot amber"></div>
+                <div class="activity-body">
+                  <div class="activity-text">Разход регистриран: <b>Асансьор сервиз</b> – 120 лв</div>
+                  <div class="activity-time">вчера, 16:42</div>
+                </div>
+              </div>
+              <div class="activity-item" data-building="b3">
+                <div class="activity-dot green"></div>
+                <div class="activity-body">
+                  <div class="activity-text">Сигнал „Счупена лампа" маркиран като <b>решен</b></div>
+                  <div class="activity-time">вчера, 11:20</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- COLLECTION TREND -->
+          <div class="section reveal">
+            <div class="section-label" style="padding:0 0 10px">Събираемост по Сгради</div>
+            <div class="card" style="padding:18px">
+              <div class="collect-stat" data-building="b1">
+                <div class="collect-label"><span>Витоша 42</span><span class="collect-pct">75%</span></div>
+                <div class="collect-bar-wrap"><div class="collect-bar" style="width:75%"></div></div>
+              </div>
+              <div class="collect-stat" data-building="b2">
+                <div class="collect-label"><span>Раковски 18</span><span class="collect-pct">67%</span></div>
+                <div class="collect-bar-wrap"><div class="collect-bar red" style="width:67%"></div></div>
+              </div>
+              <div class="collect-stat" data-building="b3">
+                <div class="collect-label"><span>Младост 1, бл. 23</span><span class="collect-pct">88%</span></div>
+                <div class="collect-bar-wrap"><div class="collect-bar green" style="width:88%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pb"></div>
+    </div>
+
+    <!-- ═══ SCREEN: BUILDINGS ═══ -->
+    <div id="screen-buildings" class="screen">
+      <div class="page-head">
+        <div class="page-title">СГРАДИ</div>
+        <div class="page-subtitle" id="bldSubtitle">3 сгради · 36 апартамента · София</div>
+        <div class="page-summary-grid">
+          <div class="page-summary-cell"><div class="page-summary-val" id="bldStat1">36</div><div class="page-summary-lab">АПАРТАМЕНТИ</div></div>
+          <div class="page-summary-cell"><div class="page-summary-val" id="bldStat2">5 247 лв</div><div class="page-summary-lab">КАСА</div></div>
+          <div class="page-summary-cell"><div class="page-summary-val" id="bldStat3">12 840 лв</div><div class="page-summary-lab">РЕЗЕРВ</div></div>
+        </div>
+      </div>
+
+      <!-- ─── BUILDING 1 ─── -->
+      <div class="fin-cols" data-building="b1" style="margin-top:14px">
+        <div class="section">
+          <div class="section-head">
+            <div class="section-label">Витоша 42 · Апартаменти · Юли 2025</div>
+            <span class="section-action">Експорт →</span>
+          </div>
+          <div class="card">
+            <div class="apt-grid">
+              <div class="apt-cell"><div class="apt-num paid">1</div><div class="apt-info"><div class="apt-name">Иван Петров</div><div class="apt-status">Платено · 12 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">2</div><div class="apt-info"><div class="apt-name">Мария Иванова</div><div class="apt-status">Платено · 08 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num unpaid">3</div><div class="apt-info"><div class="apt-name">Георги Димитров</div><div class="apt-status">Неплатено</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">4</div><div class="apt-info"><div class="apt-name">Елена Стоянова</div><div class="apt-status">Платено · 03 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num overdue">5</div><div class="apt-info"><div class="apt-name">Николай Тодоров</div><div class="apt-status">Просрочено · -100 лв</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">6</div><div class="apt-info"><div class="apt-name">Стефка Георгиева</div><div class="apt-status">Платено · 10 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num unpaid">7</div><div class="apt-info"><div class="apt-name">Борис Михайлов</div><div class="apt-status">Неплатено</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">8</div><div class="apt-info"><div class="apt-name">Анна Коларова</div><div class="apt-status">Платено · 05 Юли</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Информация за Сградата</div>
+          <div class="card">
+            <div class="list-item"><div class="li-body"><div class="li-sub">Адрес</div><div class="li-title" style="font-size:13px">бул. Витоша 42, Вх. А, София</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">Етажи / Апартаменти</div><div class="li-title" style="font-size:13px">4 етажа · 8 апартамента</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">УИН на ЕС</div><div class="li-title" style="font-size:13px">0000123456</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">Месечна такса</div><div class="li-title" style="font-size:13px">50 лв / апартамент</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">Банкова сметка</div><div class="li-title" style="font-size:13px">BG80 BNBG 9661 1020 3456 78</div></div></div>
+          </div>
+
+          <div class="section-label" style="margin-top:14px">Месечен Разчет</div>
+          <div class="card" style="padding:18px">
+            <div class="collect-stat">
+              <div class="collect-label"><span>Приходи Юли</span><span class="collect-pct">300 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar green" style="width:75%"></div></div>
+            </div>
+            <div class="collect-stat">
+              <div class="collect-label"><span>Разходи Юли</span><span class="collect-pct">452 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar red" style="width:60%"></div></div>
+            </div>
+            <div class="collect-stat" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+              <div class="collect-label" style="font-size:13px"><span style="font-weight:700;color:var(--text)">Баланс</span><span class="collect-pct" style="font-size:14px;color:var(--red)">-152 лв</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── BUILDING 2 ─── -->
+      <div class="fin-cols" data-building="b2" style="margin-top:14px">
+        <div class="section">
+          <div class="section-head">
+            <div class="section-label">Раковски 18 · Апартаменти · Юли 2025</div>
+            <span class="section-action">Експорт →</span>
+          </div>
+          <div class="card">
+            <div class="apt-grid">
+              <div class="apt-cell"><div class="apt-num paid">1</div><div class="apt-info"><div class="apt-name">Димитър Колев</div><div class="apt-status">Платено · 12 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num unpaid">2</div><div class="apt-info"><div class="apt-name">Цветелина Симеонова</div><div class="apt-status">Неплатено</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">3</div><div class="apt-info"><div class="apt-name">Михаил Петков</div><div class="apt-status">Платено · 08 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num overdue">4</div><div class="apt-info"><div class="apt-name">Калоян Радев</div><div class="apt-status">Просрочено · -180 лв</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">5</div><div class="apt-info"><div class="apt-name">Радослава Илиева</div><div class="apt-status">Платено · 05 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">6</div><div class="apt-info"><div class="apt-name">Иво Маринов</div><div class="apt-status">Платено · 03 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">7</div><div class="apt-info"><div class="apt-name">Виктория Костова</div><div class="apt-status">Платено · 10 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num unpaid">8</div><div class="apt-info"><div class="apt-name">Антон Желев</div><div class="apt-status">Неплатено</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">9</div><div class="apt-info"><div class="apt-name">Биляна Петрова</div><div class="apt-status">Платено · 14 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">10</div><div class="apt-info"><div class="apt-name">Йордан Маринов</div><div class="apt-status">Платено · 02 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">11</div><div class="apt-info"><div class="apt-name">Александра Тодорова</div><div class="apt-status">Платено · 11 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">12</div><div class="apt-info"><div class="apt-name">Мирослав Стоянов</div><div class="apt-status">Платено · 09 Юли</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Информация за Сградата</div>
+          <div class="card">
+            <div class="list-item"><div class="li-body"><div class="li-sub">Адрес</div><div class="li-title" style="font-size:13px">ул. Раковски 18, София</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">Етажи / Апартаменти</div><div class="li-title" style="font-size:13px">5 етажа · 12 апартамента</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">УИН на ЕС</div><div class="li-title" style="font-size:13px">0000234567</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">Месечна такса</div><div class="li-title" style="font-size:13px">60 лв / апартамент</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">Банкова сметка</div><div class="li-title" style="font-size:13px">BG12 UNCR 7000 1520 4567 89</div></div></div>
+          </div>
+
+          <div class="section-label" style="margin-top:14px">Месечен Разчет</div>
+          <div class="card" style="padding:18px">
+            <div class="collect-stat">
+              <div class="collect-label"><span>Приходи Юли</span><span class="collect-pct">720 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar green" style="width:67%"></div></div>
+            </div>
+            <div class="collect-stat">
+              <div class="collect-label"><span>Разходи Юли</span><span class="collect-pct">502 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar red" style="width:48%"></div></div>
+            </div>
+            <div class="collect-stat" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+              <div class="collect-label" style="font-size:13px"><span style="font-weight:700;color:var(--text)">Баланс</span><span class="collect-pct" style="font-size:14px;color:var(--green)">+218 лв</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── BUILDING 3 ─── -->
+      <div class="fin-cols" data-building="b3" style="margin-top:14px">
+        <div class="section">
+          <div class="section-head">
+            <div class="section-label">Младост 1, бл. 23 · Апартаменти · Юли 2025</div>
+            <span class="section-action">Експорт →</span>
+          </div>
+          <div class="card">
+            <div class="apt-grid">
+              <div class="apt-cell"><div class="apt-num paid">1</div><div class="apt-info"><div class="apt-name">Стоян Митев</div><div class="apt-status">Платено · 06 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">2</div><div class="apt-info"><div class="apt-name">Десислава Якимова</div><div class="apt-status">Платено · 04 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">3</div><div class="apt-info"><div class="apt-name">Любомир Райков</div><div class="apt-status">Платено · 09 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num unpaid">4</div><div class="apt-info"><div class="apt-name">Кристина Атанасова</div><div class="apt-status">Неплатено</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">5</div><div class="apt-info"><div class="apt-name">Венелин Стойков</div><div class="apt-status">Платено · 11 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">6</div><div class="apt-info"><div class="apt-name">Магдалена Велкова</div><div class="apt-status">Платено · 02 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">7</div><div class="apt-info"><div class="apt-name">Тодор Янев</div><div class="apt-status">Платено · 13 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num overdue">8</div><div class="apt-info"><div class="apt-name">Албена Йорданова</div><div class="apt-status">Просрочено · -150 лв</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">9</div><div class="apt-info"><div class="apt-name">Емил Григоров</div><div class="apt-status">Платено · 08 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">10</div><div class="apt-info"><div class="apt-name">Светлана Минева</div><div class="apt-status">Платено · 03 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">11</div><div class="apt-info"><div class="apt-name">Костадин Богданов</div><div class="apt-status">Платено · 10 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">12</div><div class="apt-info"><div class="apt-name">Габриела Андонова</div><div class="apt-status">Платено · 12 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">13</div><div class="apt-info"><div class="apt-name">Петя Стоилова</div><div class="apt-status">Платено · 05 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">14</div><div class="apt-info"><div class="apt-name">Богомил Костов</div><div class="apt-status">Платено · 14 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">15</div><div class="apt-info"><div class="apt-name">Силвия Петрова</div><div class="apt-status">Платено · 07 Юли</div></div></div>
+              <div class="apt-cell"><div class="apt-num paid">16</div><div class="apt-info"><div class="apt-name">Стилиян Димов</div><div class="apt-status">Платено · 15 Юли</div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-label">Информация за Сградата</div>
+          <div class="card">
+            <div class="list-item"><div class="li-body"><div class="li-sub">Адрес</div><div class="li-title" style="font-size:13px">ж.к. Младост 1, бл. 23, Вх. Б, София</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">Етажи / Апартаменти</div><div class="li-title" style="font-size:13px">8 етажа · 16 апартамента</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">УИН на ЕС</div><div class="li-title" style="font-size:13px">0000345678</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">Месечна такса</div><div class="li-title" style="font-size:13px">75 лв / апартамент</div></div></div>
+            <div class="list-item"><div class="li-body"><div class="li-sub">Банкова сметка</div><div class="li-title" style="font-size:13px">BG34 RZBB 9155 1078 9012 34</div></div></div>
+          </div>
+
+          <div class="section-label" style="margin-top:14px">Месечен Разчет</div>
+          <div class="card" style="padding:18px">
+            <div class="collect-stat">
+              <div class="collect-label"><span>Приходи Юли</span><span class="collect-pct">1 220 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar green" style="width:88%"></div></div>
+            </div>
+            <div class="collect-stat">
+              <div class="collect-label"><span>Разходи Юли</span><span class="collect-pct">900 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar red" style="width:65%"></div></div>
+            </div>
+            <div class="collect-stat" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+              <div class="collect-label" style="font-size:13px"><span style="font-weight:700;color:var(--text)">Баланс</span><span class="collect-pct" style="font-size:14px;color:var(--green)">+320 лв</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pb"></div>
+    </div>
+
+    <!-- ═══ SCREEN: SIGNALS ═══ -->
+    <div id="screen-signals" class="screen">
+      <div class="page-head">
+        <div class="page-title">СИГНАЛИ</div>
+        <div class="page-subtitle">7 активни · 2 спешни · средно решаване 4 дни</div>
+        <div class="page-summary-grid">
+          <div class="page-summary-cell"><div class="page-summary-val" style="color:var(--red)">2</div><div class="page-summary-lab">СПЕШНИ</div></div>
+          <div class="page-summary-cell"><div class="page-summary-val" style="color:var(--amber)">5</div><div class="page-summary-lab">В ПРОЦЕС</div></div>
+          <div class="page-summary-cell"><div class="page-summary-val" style="color:var(--green)">12</div><div class="page-summary-lab">РЕШЕНИ</div></div>
+        </div>
+      </div>
+
+      <div class="filter-row" data-filter-target="signals">
+        <button class="filter-chip active" data-value="all" onclick="setSignalFilter(this)">Всички</button>
+        <button class="filter-chip" data-value="new" onclick="setSignalFilter(this)">Нови</button>
+        <button class="filter-chip" data-value="in-progress" onclick="setSignalFilter(this)">В процес</button>
+        <button class="filter-chip" data-value="urgent" onclick="setSignalFilter(this)">Спешни</button>
+        <button class="filter-chip" data-value="resolved" onclick="setSignalFilter(this)">Решени</button>
+      </div>
+
+      <div class="section" style="padding-top:14px">
+        <div class="signals-grid" id="signalsGrid">
+
+          <div class="card" data-building="b1" data-status="in-progress" data-priority="high">
+            <div class="signal-card">
+              <div class="signal-top">
+                <span class="badge inprogress">В ПРОЦЕС</span>
+                <span class="badge tag">Витоша 42 · Ап. 4</span>
+              </div>
+              <div class="signal-title">Теч от таван – ет. 4</div>
+              <div class="signal-desc">Вода се просмуква след дъжд. Нужен е оглед на покривната хидроизолация.</div>
+              <div class="signal-meta-row">
+                <div class="priority-dot p-high"></div><span>Висок</span>
+                <div class="dot-sep"></div><span>Подаден 03 Юли</span>
+                <div class="dot-sep"></div><span>3 дни в процес</span>
+              </div>
+              <div class="signal-actions">
+                <button class="s-btn primary">Свържи се</button>
+                <button class="s-btn success">Маркирай решен</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" data-building="b2" data-status="new" data-priority="high">
+            <div class="signal-card">
+              <div class="signal-top">
+                <span class="badge sig-new">НОВА</span>
+                <span class="badge tag">Раковски 18 · Партер</span>
+              </div>
+              <div class="signal-title">Аварийна ВиК на партера</div>
+              <div class="signal-desc">Тече тръба под мивката в общата кухня. Изтича вода към съседния гараж.</div>
+              <div class="signal-meta-row">
+                <div class="priority-dot p-high"></div><span>Висок</span>
+                <div class="dot-sep"></div><span>Подаден днес 09:14</span>
+              </div>
+              <div class="signal-actions">
+                <button class="s-btn primary">Назначи техник</button>
+                <button class="s-btn">В процес</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" data-building="b1" data-status="new" data-priority="mid">
+            <div class="signal-card">
+              <div class="signal-top">
+                <span class="badge sig-new">НОВА</span>
+                <span class="badge tag">Витоша 42 · Ап. 5</span>
+              </div>
+              <div class="signal-title">Счупена лампа – стълбище</div>
+              <div class="signal-desc">Лампата на 2-ри етаж не работи от вчера.</div>
+              <div class="signal-meta-row">
+                <div class="priority-dot p-mid"></div><span>Среден</span>
+                <div class="dot-sep"></div><span>Подаден 05 Юли</span>
+              </div>
+              <div class="signal-actions">
+                <button class="s-btn primary">Назначи</button>
+                <button class="s-btn success">Решен</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" data-building="b3" data-status="in-progress" data-priority="mid">
+            <div class="signal-card">
+              <div class="signal-top">
+                <span class="badge inprogress">В ПРОЦЕС</span>
+                <span class="badge tag">Младост 1, бл. 23 · Ап. 9</span>
+              </div>
+              <div class="signal-title">Шум от съседен апартамент</div>
+              <div class="signal-desc">Многократни оплаквания за нощен шум след 23:00 ч.</div>
+              <div class="signal-meta-row">
+                <div class="priority-dot p-mid"></div><span>Среден</span>
+                <div class="dot-sep"></div><span>Подаден 06 Юли</span>
+              </div>
+              <div class="signal-actions">
+                <button class="s-btn">Изпрати писмо</button>
+                <button class="s-btn success">Решен</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" data-building="b2" data-status="in-progress" data-priority="low">
+            <div class="signal-card">
+              <div class="signal-top">
+                <span class="badge inprogress">В ПРОЦЕС</span>
+                <span class="badge tag">Раковски 18 · Ап. 11</span>
+              </div>
+              <div class="signal-title">Неработещ домофон</div>
+              <div class="signal-desc">Бутон №11 не звъни.</div>
+              <div class="signal-meta-row">
+                <div class="priority-dot p-low"></div><span>Нисък</span>
+                <div class="dot-sep"></div><span>Подаден 04 Юли</span>
+              </div>
+              <div class="signal-actions">
+                <button class="s-btn primary">Свържи се</button>
+                <button class="s-btn success">Решен</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" data-building="b1" data-status="resolved" data-priority="low">
+            <div class="signal-card">
+              <div class="signal-top">
+                <span class="badge resolved">РЕШЕНО</span>
+                <span class="badge tag">Витоша 42 · Партер</span>
+              </div>
+              <div class="signal-title">Неправилно паркиране</div>
+              <div class="signal-desc">Автомобил блокира входа. Уведомени.</div>
+              <div class="signal-meta-row">
+                <div class="priority-dot p-low"></div><span>Нисък</span>
+                <div class="dot-sep"></div><span>Решен 28 Юни</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div id="signalsEmpty" class="card" style="padding:24px;text-align:center;color:var(--muted);font-size:13px;display:none;margin-top:10px">Няма сигнали според избраните филтри.</div>
+      </div>
+
+      <div class="pb"></div>
+    </div>
+
+    <!-- ═══ SCREEN: FINANCE ═══ -->
+    <div id="screen-finance" class="screen">
+      <div class="page-head">
+        <div class="page-title">ФИНАНСИ</div>
+        <div class="page-subtitle">Консолидирано · 3 сгради · Юли 2025</div>
+        <div class="page-summary-grid">
+          <div class="page-summary-cell"><div class="page-summary-val">2 240 лв</div><div class="page-summary-lab">ПРИХОДИ</div></div>
+          <div class="page-summary-cell"><div class="page-summary-val">1 854 лв</div><div class="page-summary-lab">РАЗХОДИ</div></div>
+          <div class="page-summary-cell"><div class="page-summary-val">+386 лв</div><div class="page-summary-lab">БАЛАНС</div></div>
+        </div>
+      </div>
+
+      <div class="filter-row" data-filter-target="finance-month">
+        <button class="filter-chip" data-value="march" onclick="setFinanceMonth(this)">Март</button>
+        <button class="filter-chip" data-value="april" onclick="setFinanceMonth(this)">Април</button>
+        <button class="filter-chip" data-value="may" onclick="setFinanceMonth(this)">Май</button>
+        <button class="filter-chip" data-value="june" onclick="setFinanceMonth(this)">Юни</button>
+        <button class="filter-chip active" data-value="july" onclick="setFinanceMonth(this)">Юли 2025</button>
+      </div>
+
+      <div class="fin-cols">
+        <!-- LEFT: TRANSACTIONS -->
+        <div class="section">
+          <div class="section-head">
+            <div class="section-label">Последни Транзакции</div>
+            <span class="section-action" onclick="openModal('expense')">+ Добави →</span>
+          </div>
+          <div class="card">
+            <div class="list-item" data-building="b1">
+              <div class="li-icon green"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div class="li-body"><div class="li-title">Такса Юли · Ап. 4</div><div class="li-sub">Витоша 42 · Елена Стоянова</div></div>
+              <div class="li-right"><div class="li-amount pos">+50.00 лв</div><div class="li-meta">12 ЮЛИ</div></div>
+            </div>
+            <div class="list-item" data-building="b1">
+              <div class="li-icon red"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              <div class="li-body"><div class="li-title">Асансьор – сервиз</div><div class="li-sub">Витоша 42 · Поддръжка</div></div>
+              <div class="li-right"><div class="li-amount neg">-120.00 лв</div><div class="li-meta">11 ЮЛИ</div></div>
+            </div>
+            <div class="list-item" data-building="b2">
+              <div class="li-icon green"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div class="li-body"><div class="li-title">Такса Юли · Ап. 7</div><div class="li-sub">Раковски 18 · Виктория К.</div></div>
+              <div class="li-right"><div class="li-amount pos">+60.00 лв</div><div class="li-meta">10 ЮЛИ</div></div>
+            </div>
+            <div class="list-item" data-building="b3">
+              <div class="li-icon red"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              <div class="li-body"><div class="li-title">Препарати за чистота</div><div class="li-sub">Младост 1, бл. 23 · Хигиена</div></div>
+              <div class="li-right"><div class="li-amount neg">-78.40 лв</div><div class="li-meta">09 ЮЛИ</div></div>
+            </div>
+            <div class="list-item" data-building="b2">
+              <div class="li-icon red"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              <div class="li-body"><div class="li-title">Портиер – юли</div><div class="li-sub">Раковски 18 · Персонал</div></div>
+              <div class="li-right"><div class="li-amount neg">-380.00 лв</div><div class="li-meta">01 ЮЛИ</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: BREAKDOWN -->
+        <div class="section">
+          <div class="section-label">Разбивка по Сгради</div>
+          <div class="card" style="padding:18px">
+            <div class="collect-stat" data-building="b1">
+              <div class="collect-label"><span><b style="color:var(--text)">Витоша 42</b></span><span class="collect-pct" style="color:var(--red)">-152 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar red" style="width:60%"></div></div>
+              <div class="bs-bar-row" style="margin-top:4px"><span>+300 приход</span><span>-452 разход</span></div>
+            </div>
+            <div class="collect-stat" data-building="b2">
+              <div class="collect-label"><span><b style="color:var(--text)">Раковски 18</b></span><span class="collect-pct" style="color:var(--green)">+218 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar green" style="width:78%"></div></div>
+              <div class="bs-bar-row" style="margin-top:4px"><span>+720 приход</span><span>-502 разход</span></div>
+            </div>
+            <div class="collect-stat" data-building="b3">
+              <div class="collect-label"><span><b style="color:var(--text)">Младост 1, бл. 23</b></span><span class="collect-pct" style="color:var(--green)">+320 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar green" style="width:88%"></div></div>
+              <div class="bs-bar-row" style="margin-top:4px"><span>+1 220 приход</span><span>-900 разход</span></div>
+            </div>
+          </div>
+
+          <div class="section-label" style="margin-top:14px">Разходи по Категория</div>
+          <div class="card" style="padding:18px">
+            <div class="collect-stat">
+              <div class="collect-label"><span>Поддръжка</span><span class="collect-pct">680 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar green" style="width:68%"></div></div>
+            </div>
+            <div class="collect-stat">
+              <div class="collect-label"><span>Персонал</span><span class="collect-pct">580 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar" style="width:58%"></div></div>
+            </div>
+            <div class="collect-stat">
+              <div class="collect-label"><span>Асансьор</span><span class="collect-pct">320 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar red" style="width:84%"></div></div>
+            </div>
+            <div class="collect-stat">
+              <div class="collect-label"><span>Хигиена</span><span class="collect-pct">274 лв</span></div>
+              <div class="collect-bar-wrap"><div class="collect-bar" style="width:45%"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pb"></div>
+    </div>
+
+    <!-- ═══ SCREEN: RESIDENTS ═══ -->
+    <div id="screen-residents" class="screen">
+      <div class="page-head">
+        <div class="page-title">ЖИТЕЛИ</div>
+        <div class="page-subtitle">36 апартамента в 3 сгради · 8 със задължения</div>
+        <div class="page-summary-grid">
+          <div class="page-summary-cell"><div class="page-summary-val">36</div><div class="page-summary-lab">АПАРТАМЕНТИ</div></div>
+          <div class="page-summary-cell"><div class="page-summary-val" style="color:var(--green)">28</div><div class="page-summary-lab">ИЗРЯДНИ</div></div>
+          <div class="page-summary-cell"><div class="page-summary-val" style="color:var(--red)">8</div><div class="page-summary-lab">ЗАДЪЛЖЕНИЯ</div></div>
+        </div>
+      </div>
+
+      <div class="filter-row" data-filter-target="residents">
+        <button class="filter-chip active" data-value="all" onclick="setResidentFilter(this)">Всички</button>
+        <button class="filter-chip" data-value="debt" onclick="setResidentFilter(this)">Със задължения</button>
+        <button class="filter-chip" data-value="overdue" onclick="setResidentFilter(this)">Просрочени</button>
+      </div>
+
+      <div class="residents-cols">
+
+        <!-- BUILDING 1 -->
+        <div class="section" data-building="b1">
+          <div class="section-label">бул. Витоша 42 · Вх. А</div>
+          <div class="card">
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">1</div>
+              <div class="li-body"><div class="li-title">Иван Петров</div><div class="li-sub">0888 111 222</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">2</div>
+              <div class="li-body"><div class="li-title">Мария Иванова</div><div class="li-sub">0889 222 333</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="unpaid">
+              <div class="li-icon red" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">3</div>
+              <div class="li-body"><div class="li-title">Георги Димитров</div><div class="li-sub">0887 333 444</div></div>
+              <span class="badge unpaid">ДЪЛЖИ 50</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">4</div>
+              <div class="li-body"><div class="li-title">Елена Стоянова</div><div class="li-sub">0886 444 555</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="overdue">
+              <div class="li-icon amber" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">5</div>
+              <div class="li-body"><div class="li-title">Николай Тодоров</div><div class="li-sub">0885 555 666</div></div>
+              <span class="badge overdue">-100 ЛВ</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">6</div>
+              <div class="li-body"><div class="li-title">Стефка Георгиева</div><div class="li-sub">0884 666 777</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="unpaid">
+              <div class="li-icon red" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">7</div>
+              <div class="li-body"><div class="li-title">Борис Михайлов</div><div class="li-sub">0883 777 888</div></div>
+              <span class="badge unpaid">ДЪЛЖИ 50</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">8</div>
+              <div class="li-body"><div class="li-title">Анна Коларова</div><div class="li-sub">0882 888 999</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BUILDING 2 -->
+        <div class="section" data-building="b2">
+          <div class="section-label">ул. Раковски 18</div>
+          <div class="card">
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">1</div>
+              <div class="li-body"><div class="li-title">Димитър Колев</div><div class="li-sub">0888 100 100</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="unpaid">
+              <div class="li-icon red" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">2</div>
+              <div class="li-body"><div class="li-title">Цветелина Симеонова</div><div class="li-sub">0888 200 200</div></div>
+              <span class="badge unpaid">ДЪЛЖИ 60</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">3</div>
+              <div class="li-body"><div class="li-title">Михаил Петков</div><div class="li-sub">0888 300 300</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="overdue">
+              <div class="li-icon amber" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">4</div>
+              <div class="li-body"><div class="li-title">Калоян Радев</div><div class="li-sub">0888 400 400</div></div>
+              <span class="badge overdue">-180 ЛВ</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">5</div>
+              <div class="li-body"><div class="li-title">Радослава Илиева</div><div class="li-sub">0888 500 500</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">6</div>
+              <div class="li-body"><div class="li-title">Иво Маринов</div><div class="li-sub">0888 600 600</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">7</div>
+              <div class="li-body"><div class="li-title">Виктория Костова</div><div class="li-sub">0888 700 700</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="unpaid">
+              <div class="li-icon red" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">8</div>
+              <div class="li-body"><div class="li-title">Антон Желев</div><div class="li-sub">0888 800 800</div></div>
+              <span class="badge unpaid">ДЪЛЖИ 60</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BUILDING 3 -->
+        <div class="section" data-building="b3">
+          <div class="section-label">ж.к. Младост 1, бл. 23 · Вх. Б</div>
+          <div class="card">
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">1</div>
+              <div class="li-body"><div class="li-title">Стоян Митев</div><div class="li-sub">0887 100 100</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">2</div>
+              <div class="li-body"><div class="li-title">Десислава Якимова</div><div class="li-sub">0887 200 200</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">3</div>
+              <div class="li-body"><div class="li-title">Любомир Райков</div><div class="li-sub">0887 300 300</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="unpaid">
+              <div class="li-icon red" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">4</div>
+              <div class="li-body"><div class="li-title">Кристина Атанасова</div><div class="li-sub">0887 400 400</div></div>
+              <span class="badge unpaid">ДЪЛЖИ 75</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">5</div>
+              <div class="li-body"><div class="li-title">Венелин Стойков</div><div class="li-sub">0887 500 500</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">6</div>
+              <div class="li-body"><div class="li-title">Магдалена Велкова</div><div class="li-sub">0887 600 600</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">7</div>
+              <div class="li-body"><div class="li-title">Тодор Янев</div><div class="li-sub">0887 700 700</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="overdue">
+              <div class="li-icon amber" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">8</div>
+              <div class="li-body"><div class="li-title">Албена Йорданова</div><div class="li-sub">0887 800 800</div></div>
+              <span class="badge overdue">-150 ЛВ</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">9</div>
+              <div class="li-body"><div class="li-title">Емил Григоров</div><div class="li-sub">0887 900 900</div></div>
+              <span class="badge paid">ИЗРЯДЕН</span>
+            </div>
+            <div class="list-item" data-debt="ok">
+              <div class="li-icon blue" style="font-family:'Unbounded',sans-serif;font-weight:800;font-size:11px">10</div>
+              <div class="li-body"><div class="li-title">+ още 6 апартамента</div><div class="li-sub">Виж пълен списък</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pb"></div>
+    </div>
+
+  </div><!-- end scroll-content -->
+
+  <!-- FAB -->
+  <button class="fab" id="fab-add" onclick="openModal('default')">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <div class="tab-item active" id="tab-home" onclick="switchTab('home')">
+      <div class="tab-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+      <div class="tab-label">Дашборд</div>
+    </div>
+    <div class="tab-item" id="tab-buildings" onclick="switchTab('buildings')">
+      <div class="tab-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V7l9-4 9 4v14"/><path d="M9 21V12h6v9"/></svg></div>
+      <div class="tab-label">Сгради</div>
+    </div>
+    <div class="tab-item" id="tab-signals" onclick="switchTab('signals')">
+      <div class="tab-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+      <div class="tab-label">Сигнали</div>
+    </div>
+    <div class="tab-item" id="tab-finance" onclick="switchTab('finance')">
+      <div class="tab-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+      <div class="tab-label">Финанси</div>
+    </div>
+    <div class="tab-item" id="tab-residents" onclick="switchTab('residents')">
+      <div class="tab-icon-wrap"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+      <div class="tab-label">Жители</div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal" class="modal-overlay hidden" onclick="closeModalBg(event)">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title" id="modal-title">Ново Действие</div>
+      <div id="modal-body">
+        <select class="modal-input">
+          <option>Витоша 42 · Вх. А</option>
+          <option>Раковски 18</option>
+          <option>Младост 1, бл. 23</option>
+          <option>Всички сгради</option>
+        </select>
+        <input class="modal-input" placeholder="Заглавие" />
+        <textarea class="modal-input" placeholder="Описание..."></textarea>
+      </div>
+      <button class="modal-submit" onclick="closeModal()">Запази →</button>
+    </div>
+  </div>
+
+</div><!-- end app -->
+
+<script>
+/* ─── PER-BUILDING DATA (mock) ─── */
+const buildingData = {
+  all: {
+    headerRole: 'Домооправител · 3 сгради · 36 апартамента',
+    cash: '5 247', cashTrend: '<span class="kpi-trend up">↑ 12%</span> спрямо м.м.',
+    reserve: '12 840', reserveSub: 'Сумарно за 3 сгради',
+    collection: '78', collectionSub: 'Юли 2025 · 28 от 36 ап.',
+    signals: '7', signalsSub: '<span class="kpi-trend up" style="color:var(--red)">2 спешни</span>',
+    bldSubtitle: '3 сгради · 36 апартамента · София',
+    bldStat1: '36', bldStat2: '5 247 лв', bldStat3: '12 840 лв'
+  },
+  b1: {
+    headerRole: 'Домооправител · бул. Витоша 42, Вх. А · 8 апартамента',
+    cash: '847', cashTrend: '<span class="kpi-trend up">↑ 8%</span> спрямо м.м.',
+    reserve: '2 340', reserveSub: 'Резерв на сградата',
+    collection: '75', collectionSub: 'Юли 2025 · 6 от 8 ап.',
+    signals: '2', signalsSub: '<span class="kpi-trend up" style="color:var(--red)">1 спешен</span>',
+    bldSubtitle: 'бул. Витоша 42 · Вх. А · София',
+    bldStat1: '8', bldStat2: '847 лв', bldStat3: '2 340 лв'
+  },
+  b2: {
+    headerRole: 'Домооправител · ул. Раковски 18 · 12 апартамента',
+    cash: '1 420', cashTrend: '<span class="kpi-trend down" style="color:var(--red)">↓ 4%</span> спрямо м.м.',
+    reserve: '4 100', reserveSub: 'Резерв на сградата',
+    collection: '67', collectionSub: 'Юли 2025 · 8 от 12 ап.',
+    signals: '3', signalsSub: '<span class="kpi-trend up" style="color:var(--red)">1 спешен</span>',
+    bldSubtitle: 'ул. Раковски 18 · София',
+    bldStat1: '12', bldStat2: '1 420 лв', bldStat3: '4 100 лв'
+  },
+  b3: {
+    headerRole: 'Домооправител · ж.к. Младост 1, бл. 23, Вх. Б · 16 апартамента',
+    cash: '2 980', cashTrend: '<span class="kpi-trend up">↑ 18%</span> спрямо м.м.',
+    reserve: '6 400', reserveSub: 'Резерв на сградата',
+    collection: '88', collectionSub: 'Юли 2025 · 14 от 16 ап.',
+    signals: '2', signalsSub: '<span class="kpi-trend up" style="color:var(--green)">0 спешни</span>',
+    bldSubtitle: 'ж.к. Младост 1, бл. 23 · Вх. Б · София',
+    bldStat1: '16', bldStat2: '2 980 лв', bldStat3: '6 400 лв'
+  }
+};
+
+/* ─── STATE ─── */
+const state = {
+  building: 'all',
+  signalFilter: 'all',
+  residentFilter: 'all'
+};
+
+/* ─── REVEAL ─── */
+function initReveals() {
+  document.querySelectorAll('.screen.active .reveal').forEach((el, i) => {
+    el.classList.remove('visible');
+    setTimeout(() => el.classList.add('visible'), 80 + i * 100);
+  });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  initReveals();
+  applyAllFilters();
+});
+
+/* ─── RIPPLE ─── */
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.cta-btn, .modal-submit, .fab');
+  if (!btn) return;
+  const ripple = document.createElement('span');
+  ripple.classList.add('ripple');
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+  btn.appendChild(ripple);
+  ripple.addEventListener('animationend', () => ripple.remove());
+});
+
+/* ─── TAB SWITCH ─── */
+function switchTab(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  const screen = document.getElementById('screen-' + name);
+  if (!screen) return;
+  screen.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelector('.scroll-content').scrollTop = 0;
+  initReveals();
+  applyAllFilters();
+}
+
+/* ─── BUILDING SWITCH ─── */
+function setBuilding(el, id) {
+  state.building = id;
+  syncBuildingChips();
+  applyAllFilters();
+}
+function setBuildingById(id) {
+  state.building = id;
+  syncBuildingChips();
+  applyAllFilters();
+  // Scroll up so user sees updated KPIs
+  document.querySelector('.scroll-content').scrollTop = 0;
+}
+function syncBuildingChips() {
+  // Header chips
+  document.querySelectorAll('.bld-chip').forEach(c => {
+    c.classList.remove('active');
+  });
+  const hdrIdx = state.building === 'all' ? 0
+    : state.building === 'b1' ? 1
+    : state.building === 'b2' ? 2 : 3;
+  const hdrChips = document.querySelectorAll('.bld-chip');
+  if (hdrChips[hdrIdx]) hdrChips[hdrIdx].classList.add('active');
+
+  // Buildings-screen filter row chips (only b1/b2/b3 — no "all")
+  document.querySelectorAll('.filter-row[data-filter-target="buildings"] .filter-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.value === state.building);
+  });
+}
+
+/* ─── FILTER CHIPS ─── */
+function setSignalFilter(el) {
+  el.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  state.signalFilter = el.dataset.value;
+  applyAllFilters();
+}
+function setResidentFilter(el) {
+  el.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  state.residentFilter = el.dataset.value;
+  applyAllFilters();
+}
+function setFinanceMonth(el) {
+  el.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+/* ─── APPLY FILTERS ─── */
+function applyAllFilters() {
+  const b = state.building;
+
+  /* KPI + header text */
+  const d = buildingData[b];
+  if (d) {
+    setText('headerRole', d.headerRole);
+    setHTML('kpiCash',         d.cash + '<span style="font-size:14px;color:var(--muted);font-weight:600">&nbsp;лв</span>');
+    setHTML('kpiCashSub',      d.cashTrend);
+    setHTML('kpiReserve',      d.reserve + '<span style="font-size:14px;color:var(--muted);font-weight:600">&nbsp;лв</span>');
+    setText('kpiReserveSub',   d.reserveSub);
+    setHTML('kpiCollection',   d.collection + '<span style="font-size:14px;color:var(--muted);font-weight:600">%</span>');
+    setText('kpiCollectionSub',d.collectionSub);
+    setText('kpiSignals',      d.signals);
+    setHTML('kpiSignalsSub',   d.signalsSub);
+    /* Buildings page-head */
+    setText('bldSubtitle', d.bldSubtitle);
+    setText('bldStat1',    d.bldStat1);
+    setText('bldStat2',    d.bldStat2);
+    setText('bldStat3',    d.bldStat3);
+  }
+
+  /* Filter elements with data-building (everywhere) */
+  document.querySelectorAll('[data-building]').forEach(el => {
+    const elB = el.dataset.building;
+    const matchBuilding = (b === 'all') || (elB === b) || (elB === 'all');
+    el.style.display = matchBuilding ? '' : 'none';
+  });
+
+  /* Signals filter (status/priority) */
+  document.querySelectorAll('#signalsGrid > .card').forEach(card => {
+    if (card.style.display === 'none') return; // already hidden by building filter
+    const status = card.dataset.status;
+    const priority = card.dataset.priority;
+    let show = true;
+    switch (state.signalFilter) {
+      case 'new':         show = status === 'new'; break;
+      case 'in-progress': show = status === 'in-progress'; break;
+      case 'resolved':    show = status === 'resolved'; break;
+      case 'urgent':      show = priority === 'high' && status !== 'resolved'; break;
+      case 'all':
+      default:            show = true;
+    }
+    if (!show) card.style.display = 'none';
+  });
+  /* Show/hide empty state for signals */
+  const visibleSignals = [...document.querySelectorAll('#signalsGrid > .card')].filter(c => c.style.display !== 'none').length;
+  const empty = document.getElementById('signalsEmpty');
+  if (empty) empty.style.display = visibleSignals === 0 ? 'block' : 'none';
+
+  /* Residents filter (debt) */
+  document.querySelectorAll('#screen-residents .list-item[data-debt]').forEach(li => {
+    if (li.style.display === 'none') return;
+    const debt = li.dataset.debt;
+    let show = true;
+    switch (state.residentFilter) {
+      case 'debt':    show = debt === 'unpaid' || debt === 'overdue'; break;
+      case 'overdue': show = debt === 'overdue'; break;
+      case 'all':
+      default:        show = true;
+    }
+    if (!show) li.style.display = 'none';
+  });
+  /* Hide whole resident-section if all its rows are hidden */
+  document.querySelectorAll('#screen-residents .residents-cols > .section').forEach(sec => {
+    if (sec.style.display === 'none') return;
+    const visibleRows = [...sec.querySelectorAll('.list-item')].filter(li => li.style.display !== 'none').length;
+    if (visibleRows === 0) sec.style.display = 'none';
+  });
+}
+
+function setText(id, txt) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = txt;
+}
+function setHTML(id, html) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+/* ─── MODAL ─── */
+const modalConfigs = {
+  notice:  { title: 'Ново Известие към Жителите' },
+  payment: { title: 'Маркирай Плащане' },
+  expense: { title: 'Добави Разход' },
+  vote:    { title: 'Стартирай Гласуване' },
+  default: { title: 'Ново Действие' }
+};
+function openModal(type='default') {
+  const cfg = modalConfigs[type] || modalConfigs.default;
+  document.getElementById('modal-title').textContent = cfg.title;
+  document.getElementById('modal').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+function closeModalBg(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+</script>
+</body>
+</html>
